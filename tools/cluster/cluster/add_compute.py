@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import uuid
 import secrets
 import argparse
@@ -106,7 +107,8 @@ def add_compute():
     # Print the connection string and an expiration notice to the user.
     print('Use the following connection string to add a new compute node'
           f' to the cluster (valid for {VALIDITY_PERIOD.minutes} minutes from'
-          f' this moment):\n{connection_string}')
+          f' this moment):', file=sys.stderr)
+    print(connection_string)
 
 
 def main():

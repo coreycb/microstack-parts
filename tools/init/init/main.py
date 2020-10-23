@@ -33,6 +33,7 @@ import argparse
 import logging
 import sys
 import socket
+import ipaddress
 
 from functools import wraps
 
@@ -42,6 +43,7 @@ from init.shell import (
     check,
     check_output,
     config_set,
+    fallback_source_address,
 )
 
 from init import questions
@@ -66,6 +68,16 @@ def check_file_size_positive(value):
                 f'The file size for a loop device'
                 f' must be larger than 1GB, current: {value}')
     return ival
+
+
+def check_source_ip_address_valid(value):
+    try:
+        addr = ipaddress.ip_address(value)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(
+            'Invalid source IP address provided in as an argument.'
+        ) from e
+    return addr
 
 
 def parse_init_args():
@@ -94,6 +106,13 @@ def parse_init_args():
             help=('File size in GB (10^9) of a file to be exposed as a loop'
                   ' device for the Cinder LVM backend.')
     )
+    parser.add_argument('--default-source-ip',
+                        dest='default_source_ip',
+                        type=check_source_ip_address_valid,
+                        default=fallback_source_address(),
+                        help='The IP address to be used by MicroStack'
+                             ' services as a source IP where possible. This'
+                             ' option can be useful for multi-homed nodes.')
     args = parser.parse_args()
     return args
 
@@ -123,6 +142,9 @@ def process_init_args(args):
     if args.connection_string:
         config_set(**{
             'config.cluster.connection-string.raw': args.connection_string})
+
+    config_set(**{
+        'config.network.default-source-ip': args.default_source_ip})
 
     if args.auto and not args.control and not args.connection_string:
         raise ValueError('The connection string parameter must be specified'
@@ -157,7 +179,6 @@ def init() -> None:
         questions.DnsDomain(),
         questions.NetworkSettings(),
         questions.OsPassword(),  # TODO: turn this off if COMPUTE.
-        questions.ForceQemu(),
         # The following are not yet implemented:
         # questions.VmSwappiness(),
         # questions.FileHandleLimits(),

@@ -199,13 +199,24 @@ def download(url: str, output: str) -> None:
     wget.download(url, output)
 
 
-def fetch_ip_address():
+def fallback_source_address():
+    '''Get an ip address through which the default gateway is accessible.
+
+    Note that Linux kernel allows multiple default gateways to be present with
+    the same or different metrics which may lead to unexpected behaviors. This
+    situation is unlikely but needs to be taken into account.
+    '''
     try:
         interface = netifaces.gateways()['default'][netifaces.AF_INET][1]
         return netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr']
     except (KeyError, IndexError):
         log.exception('Failed to get ip address!')
         return None
+
+
+def default_source_address():
+    '''Get a default source address.'''
+    return config_get('config.network.default-source-ip')
 
 
 def default_network():

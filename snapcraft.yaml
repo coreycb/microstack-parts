@@ -882,7 +882,7 @@ parts:
       - -*
 
   openvswitch:
-    source: https://github.com/openvswitch/ovs/archive/v2.13.0.tar.gz
+    source: https://github.com/openvswitch/ovs/archive/v2.14.0.tar.gz
     plugin: autotools
     build-packages:
       - autoconf
@@ -1231,7 +1231,7 @@ parts:
     - --includedir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/include
     - --oldincludedir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/include
     - --localstatedir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common
-    - --sysconfdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common
+    - --sysconfdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
     - DNSMASQ=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/dnsmasq
     - DMIDECODE=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/dmidecode
     - OVSVSCTL=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/local/bin/ovs-vsctl

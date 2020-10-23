@@ -52,8 +52,9 @@ setup:
     horizon-snap.conf.j2: "{snap_common}/etc/horizon/horizon.conf.d/horizon-snap.conf"
     horizon-nginx.conf.j2: "{snap_common}/etc/nginx/snap/sites-enabled/horizon.conf"
     05_snap_tweaks.j2: "{snap_common}/etc/horizon/local_settings.d/_05_snap_tweaks.py"
-    libvirtd.conf.j2: "{snap_common}/libvirt/libvirtd.conf"
-    virtlogd.conf.j2: "{snap_common}/libvirt/virtlogd.conf"
+    libvirtd.conf.j2: "{snap_common}/etc/libvirt/libvirtd.conf"
+    qemu.conf.j2: "{snap_common}/etc/libvirt/qemu.conf"
+    virtlogd.conf.j2: "{snap_common}/etc/libvirt/virtlogd.conf"
     microstack.rc.j2: "{snap_common}/etc/microstack.rc"
     microstack.json.j2: "{snap_common}/etc/microstack.json"
     glance.conf.d.keystone.conf.j2: "{snap_common}/etc/glance/glance.conf.d/keystone.conf"
@@ -118,6 +119,9 @@ setup:
     ovn_metadata_proxy_shared_secret: 'config.credentials.ovn-metadata-proxy-shared-secret'
     setup_loop_based_cinder_lvm_backend: 'config.cinder.setup-loop-based-cinder-lvm-backend'
     lvm_backend_volume_group: 'config.cinder.lvm-backend-volume-group'
+    virt_type: 'config.nova.virt-type'
+    cpu_mode: 'config.nova.cpu-mode'
+    cpu_models: 'config.nova.cpu-models'
 entry_points:
   keystone-manage:
     binary: "{snap}/bin/keystone-manage"

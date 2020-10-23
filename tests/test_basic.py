@@ -16,13 +16,11 @@ Web IDE.
 
 import os
 import sys
-import time
-import json
 import unittest
 
 sys.path.append(os.getcwd())
 
-from tests.framework import Framework, check, check_output, call  # noqa E402
+from tests.framework import Framework  # noqa E402
 
 
 class TestBasics(Framework):
@@ -34,23 +32,21 @@ class TestBasics(Framework):
         open the Horizon GUI.
 
         """
-        host = self.get_host()
-        host.install()
-        host.init([
+        self._localhost.install_microstack(path='microstack_ussuri_amd64.snap')
+        self._localhost.init_microstack([
             '--auto',
             '--control',
             '--setup-loop-based-cinder-lvm-backend',
             '--loop-device-file-size=24'
             ])
-        prefix = host.prefix
+        endpoints = self._localhost.check_output(
+            ['/snap/bin/microstack.openstack', 'endpoint', 'list']
+        ).decode('utf-8')
 
-        endpoints = check_output(
-            *prefix, '/snap/bin/microstack.openstack', 'endpoint', 'list')
+        control_ip = self._localhost.check_output(
+            ['sudo', 'snap', 'get', 'microstack', 'config.network.control-ip'],
+        ).decode('utf-8')
 
-        control_ip = check_output(
-            *prefix, 'sudo', 'snap', 'get',
-            'microstack', 'config.network.control-ip'
-        )
         # Endpoints should contain the control IP.
         self.assertTrue(control_ip in endpoints)
 
@@ -58,64 +54,46 @@ class TestBasics(Framework):
         self.assertFalse("localhost" in endpoints)
 
         # We should be able to launch an instance
+        instance_name = 'test-instance'
         print("Testing microstack.launch ...")
-        check(*prefix, '/snap/bin/microstack.launch', 'cirros',
-              '--name', 'breakfast', '--retry')
-
-        # ... and ping it
-        # Skip these tests in the gate, as they are not reliable there.
-        # TODO: fix these in the gate!
-        if 'multipass' in prefix:
-            self.verify_instance_networking(host, 'breakfast')
-        else:
-            # Artificial wait, to allow for stuff to settle for the GUI test.
-            # TODO: get rid of this, when we drop the ping tests back int.
-            time.sleep(10)
+        self._localhost.check_output(
+            ['/snap/bin/microstack.launch', 'cirros',
+             '--name', instance_name, '--retry']
+        )
+        self.verify_instance_networking(self._localhost, instance_name)
 
         # The Horizon Dashboard should function
-        self.verify_gui(host)
+        self.verify_gui(self._localhost)
 
         # Verify that we can uninstall the snap cleanly, and that the
         # ovs bridge goes away.
 
         # Check to verify that our bridge is there.
-        self.assertTrue('br-ex' in check_output(*prefix, 'ip', 'a'))
+        self.assertTrue(
+            'br-ex' in self._localhost.check_output(
+                ['ip', 'a']).decode('utf-8'))
 
-        check(*prefix, 'sudo', 'mkdir', '-p', '/tmp/snap.microstack-test/tmp')
-        check(*prefix, 'sudo', 'cp',
-              '/var/snap/microstack/common/etc/microstack.json',
-              '/tmp/snap.microstack-test/tmp/microstack.json')
-        check(*prefix, 'microstack-test.rally', 'db', 'recreate')
-        check(*prefix, 'microstack-test.rally', 'deployment', 'create',
-              '--filename', '/tmp/microstack.json',
-              '--name', 'snap_generated')
-        check(*prefix, 'microstack-test.tempest-init')
-        check(*prefix, 'microstack-test.rally', 'verify', 'start',
-              '--load-list',
-              '/snap/microstack-test/current/2020.06-test-list.txt',
-              '--detailed', '--concurrency', '2')
-        check(*prefix, 'microstack-test.rally', 'verify', 'report',
-              '--type', 'json', '--to',
-              '/tmp/verification-report.json')
-        report = json.loads(check_output(
-            *prefix, 'sudo', 'cat',
-            '/tmp/snap.microstack-test/tmp/verification-report.json'))
+        self._localhost.setup_tempest_verifier()
         # Make sure there are no verification failures in the report.
-        failures = list(report['verifications'].values())[0]['failures']
+        failures = self._localhost.run_verifications()
         self.assertEqual(failures, 0, 'Verification tests had failure.')
 
         # Try to remove the snap without sudo.
-        self.assertFalse(
-                call(*prefix, 'snap', 'remove', '--purge', 'microstack'))
+        self.assertEqual(self._localhost.call([
+            'snap', 'remove', '--purge', 'microstack']), 1)
 
         # Retry with sudo (should succeed).
-        check(*prefix, 'sudo', 'snap', 'remove', '--purge', 'microstack')
+        self._localhost.check_call(
+            ['sudo', 'snap', 'remove', '--purge', 'microstack'])
 
         # Verify that MicroStack is gone.
-        self.assertFalse(call(*prefix, 'snap', 'list', 'microstack'))
+        self.assertEqual(self._localhost.call(
+            ['snap', 'list', 'microstack']), 1)
 
         # Verify that bridge is gone.
-        self.assertFalse('br-ex' in check_output(*prefix, 'ip', 'a'))
+        self.assertFalse(
+            'br-ex' in self._localhost.check_output(
+                ['ip', 'a']).decode('utf-8'))
 
         # We made it to the end. Set passed to True!
         self.passed = True

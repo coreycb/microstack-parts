@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import urllib3
 import json
 
@@ -65,7 +66,8 @@ def join():
         print('An authorization failure has occurred while joining the'
               ' the cluster: please make sure the connection string'
               ' was entered as returned by the "add-compute" command'
-              ' and that it was used before its expiration time.')
+              ' and that it was used before its expiration time.',
+              file=sys.stderr)
         if response_data:
             message = json.loads(response_data)['message']
             raise UnauthorizedRequestError(message)

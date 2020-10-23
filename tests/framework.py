@@ -1,55 +1,24 @@
 import logging
 import json
 import unittest
-import os
 import subprocess
-import time
-from typing import List
+import yaml
 
 import petname
+import tenacity
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 
 
 # Setup logging
-log = logging.getLogger("microstack_test")
-log.setLevel(logging.DEBUG)
+logger = logging.getLogger("microstack_test")
+logger.setLevel(logging.DEBUG)
 stream = logging.StreamHandler()
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 stream.setFormatter(formatter)
-log.addHandler(stream)
-
-
-def check(*args: List[str]) -> int:
-    """Execute a shell command, raising an error on failed excution.
-
-    :param args: strings to be composed into the bash call.
-
-    """
-    return subprocess.check_call(args)
-
-
-def check_output(*args: List[str]) -> str:
-    """Execute a shell command, returning the output of the command.
-
-    :param args: strings to be composed into the bash call.
-
-    Include our env; pass in any extra keyword args.
-    """
-    return subprocess.check_output(args, universal_newlines=True).strip()
-
-
-def call(*args: List[str]) -> bool:
-    """Execute a shell command.
-
-    Return True if the call executed successfully (returned 0), or
-    False if it returned with an error code (return > 0)
-
-    :param args: strings to be composed into the bash call.
-    """
-    return not subprocess.call(args)
+logger.addHandler(stream)
 
 
 def gui_wrapper(func):
@@ -73,135 +42,351 @@ def gui_wrapper(func):
     return wrapper
 
 
-class Host():
-    """A host with MicroStack installed."""
+class TestHost:
 
     def __init__(self):
-        self.prefix = []
-        self.dump_dir = '/tmp'
-        self.machine = ''
-        self.distro = os.environ.get('DISTRO') or 'bionic'
-        self.snap = os.environ.get('SNAP_FILE') or \
-            'microstack_ussuri_amd64.snap'
-        self.horizon_ip = '10.20.20.1'
-        self.host_type = 'localhost'
+        pass
 
-        if os.environ.get('MULTIPASS'):
-            self.host_type = 'multipass'
-            print("Booting a Multipass VM ...")
-            self.multipass()
+    def destroy(self):
+        raise NotImplementedError
 
-        self.microstack_test()
+    def check_output(self, args, **kwargs):
+        raise NotImplementedError
 
-    def install(self, snap=None, channel='dangerous'):
-        if snap is None:
-            snap = self.snap
-        print("Installing {}".format(snap))
+    def call(self, args, **kwargs):
+        raise NotImplementedError
 
-        check(*self.prefix, 'sudo', 'snap', 'install',
-              '--{}'.format(channel), '--devmode', snap)
+    def check_call(self, args, **kwargs):
+        raise NotImplementedError
+
+    def install_snap(self, name, options):
+        self.check_output(['sudo', 'snap', 'install', name, *options])
+
+    def remove_snap(self, name, options):
+        self.check_output(['sudo', 'snap', 'remove', name, *options])
+
+    def snap_connect(self, snap_name, plug_name):
+        self.check_output(['sudo', 'snap', 'connect',
+                          f'{snap_name}:{plug_name}'])
+
+    def install_microstack(self, *, channel='edge', path=None):
+        """Install MicroStack at this host and connect relevant plugs.
+        """
+        if path is not None:
+            self.install_snap(path, ['--devmode'])
+        else:
+            self.install_snap('microstack', [f'--{channel}', '--devmode'])
 
         # TODO: add microstack-support once it is merged into snapd.
-        connections = [
-                'microstack:libvirt', 'microstack:netlink-audit',
-                'microstack:firewall-control', 'microstack:hardware-observe',
-                'microstack:kernel-module-observe', 'microstack:kvm',
-                'microstack:log-observe', 'microstack:mount-observe',
-                'microstack:netlink-connector', 'microstack:network-observe',
-                'microstack:openvswitch-support', 'microstack:process-control',
-                'microstack:system-observe', 'microstack:network-control',
-                'microstack:system-trace', 'microstack:block-devices',
-                'microstack:raw-usb'
+        plugs = [
+                'libvirt', 'netlink-audit',
+                'firewall-control', 'hardware-observe',
+                'kernel-module-observe', 'kvm',
+                'log-observe', 'mount-observe',
+                'netlink-connector', 'network-observe',
+                'openvswitch-support', 'process-control',
+                'system-observe', 'network-control',
+                'system-trace', 'block-devices',
+                'raw-usb'
         ]
-        for connection in connections:
-            check('sudo', 'snap', 'connect', connection)
+        for plug in plugs:
+            self.snap_connect('microstack', plug)
 
-    def init(self, args=['--auto']):
-        print(f"Initializing the snap with {args}")
-        check(*self.prefix, 'sudo', 'microstack', 'init', *args)
+    def init_microstack(self, args=['--auto']):
+        self.check_call(['sudo', 'microstack', 'init', *args])
 
-    def multipass(self):
-        self.machine = petname.generate()
-        self.prefix = ['multipass', 'exec', self.machine, '--']
+    def setup_tempest_verifier(self):
+        self.check_call(['sudo', 'snap', 'install', 'microstack-test'])
+        self.check_call(['sudo', 'mkdir', '-p',
+                        '/tmp/snap.microstack-test/tmp'])
+        self.check_call(['sudo', 'cp',
+                         '/var/snap/microstack/common/etc/microstack.json',
+                         '/tmp/snap.microstack-test/tmp/microstack.json'])
+        self.check_call(['microstack-test.rally', 'db', 'recreate'])
+        self.check_call([
+            'microstack-test.rally', 'deployment', 'create',
+            '--filename', '/tmp/microstack.json',
+            '--name', 'snap_generated'])
+        self.check_call(['microstack-test.tempest-init'])
 
-        check('sudo', 'snap', 'install', '--classic', '--edge', 'multipass')
+    def run_verifications(self):
+        """Run a set of verification tests on MicroStack from this host."""
+        self.check_call([
+            'microstack-test.rally', 'verify', 'start',
+            '--load-list',
+            '/snap/microstack-test/current/2020.06-test-list.txt',
+            '--detailed', '--concurrency', '2'])
+        self.check_call([
+            'microstack-test.rally', 'verify', 'report',
+            '--type', 'json', '--to',
+            '/tmp/verification-report.json'])
+        report = json.loads(self.check_output([
+            'sudo', 'cat',
+            '/tmp/snap.microstack-test/tmp/verification-report.json']))
+        # Make sure there are no verification failures in the report.
+        failures = list(report['verifications'].values())[0]['failures']
+        return failures
 
-        check('multipass', 'launch', '--cpus', '2', '--mem', '8G', self.distro,
-              '--name', self.machine)
-        check('multipass', 'copy-files', self.snap, '{}:'.format(self.machine))
 
-        # Figure out machine's ip
-        info = check_output('multipass', 'info', self.machine, '--format',
-                            'json')
-        info = json.loads(info)
-        self.horizon_ip = info['info'][self.machine]['ipv4'][0]
+class LocalTestHost(TestHost):
 
-    def microstack_test(self):
-        check('sudo', 'snap', 'install', 'microstack-test')
+    def __init__(self):
+        super().__init__()
+        self.install_snap('multipass', ['--stable'])
+        self.install_snap('lxd', ['--stable'])
+        self.check_call(['sudo', 'lxd', 'init', '--auto'])
 
-    def dump_logs(self):
-        # TODO: make unique log name
-        if check_output('whoami') == 'zuul':
-            self.dump_dir = "/home/zuul/zuul-output/logs"
+        try:
+            self.run(['sudo', 'lxc', 'profile', 'show', 'microstack'],
+                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                     check=True)
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode('utf-8')
+            if 'No such object' in stderr:
+                self._create_microstack_profile()
+                return
+            else:
+                raise RuntimeError(
+                    'An unexpected exception has occurred '
+                    f'while trying to query the profile, stderr: {stderr}'
+                ) from e
+        self.run(['sudo', 'lxc', 'profile', 'delete', 'microstack'],
+                 check=True)
+        self._create_microstack_profile()
 
-        check(*self.prefix,
-              'sudo', 'tar', 'cvzf',
-              '{}/dump.tar.gz'.format(self.dump_dir),
-              '/var/snap/microstack/common/log',
-              '/var/snap/microstack/common/etc',
-              '/var/log/syslog')
-        if 'multipass' in self.prefix:
-            check('multipass', 'copy-files',
-                  '{}:/tmp/dump.tar.gz'.format(self.machine), '.')
-        print('Saved dump.tar.gz to local working dir.')
+    def _create_microstack_profile(self):
+        self.run(['sudo', 'lxc', 'profile', 'create', 'microstack'],
+                 stdout=subprocess.PIPE,
+                 stderr=subprocess.PIPE,
+                 check=True)
+        profile_conf = {
+            'config': {'linux.kernel_modules':
+                       'iptable_nat, ip6table_nat, ebtables, openvswitch,'
+                       'tap, vhost, vhost_net, vhost_scsi, vhost_vsock',
+                       'security.nesting': 'true',
+                       'limits.kernel.memlock': 'unlimited'
+                       },
+            'devices':
+            {
+                'tun': {'path': '/dev/net/tun', 'type': 'unix-char'},
+                'vhost-net': {'path': '/dev/vhost-net', 'type': 'unix-char'},
+                'vhost-scsi': {'path': '/dev/vhost-scsi', 'type': 'unix-char'},
+                'vhost-vsock': {'path': '/dev/vhost-vsock',
+                                'type': 'unix-char'}
+            }
+        }
+        self.run(['sudo', 'lxc', 'profile', 'edit', 'microstack'],
+                 stdout=subprocess.PIPE,
+                 stderr=subprocess.PIPE,
+                 check=True,
+                 input=yaml.dump(profile_conf).encode('utf-8'))
 
-    def teardown(self):
-        if 'multipass' in self.prefix:
-            check('sudo', 'multipass', 'delete', self.machine)
-            check('sudo', 'multipass', 'purge')
-        else:
-            if call('snap', 'list', 'microstack'):
-                # Uninstall microstack if it is installed (it may not be).
-                check('sudo', 'snap', 'remove', '--purge', 'microstack')
+    def destroy(self):
+        self.remove_snap('microstack', ['--purge'])
+
+    def check_output(self, args, **kwargs):
+        return subprocess.check_output(args, **kwargs).strip()
+
+    def call(self, args, **kwargs):
+        return subprocess.call(args, **kwargs)
+
+    def check_call(self, args, **kwargs):
+        subprocess.check_call(args, **kwargs)
+
+    def run(self, args, **kwargs):
+        subprocess.run(args, **kwargs)
+
+
+class MultipassTestHost(TestHost):
+    """A virtual host set up via Multipass on a local machine."""
+
+    def __init__(self, distribution):
+        self.distribution = distribution
+        self.name = petname.generate()
+        self._launch()
+
+    def check_output(self, args, **kwargs):
+        prefix = ['sudo', 'multipass', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        return subprocess.check_output(cmd, **kwargs).strip()
+
+    def call(self, args, **kwargs):
+        prefix = ['sudo', 'multipass', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        return subprocess.call(cmd, **kwargs)
+
+    def check_call(self, args, **kwargs):
+        prefix = ['sudo', 'multipass', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        subprocess.check_call(cmd, **kwargs)
+
+    def run(self, args, **kwargs):
+        prefix = ['sudo', 'multipass', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        subprocess.run(cmd, **kwargs)
+
+    def _launch(self):
+        # Possible upstream CI resource allocation is documented here:
+        # https://docs.opendev.org/opendev/infra-manual/latest/testing.html
+        # >= 8GiB of RAM
+        # 40-80 GB of storage (possibly under /opt)
+        # Swap is not guaranteed.
+        # With m1.tiny flavor the compute node needs slightly less than 3G of
+        # RAM and 2.5G of disk space.
+        subprocess.check_call(['sudo', 'sync'])
+        subprocess.check_call(['sudo', 'sh', '-c',
+                               'echo 3 > /proc/sys/vm/drop_caches'])
+        subprocess.check_call(['sudo', 'multipass', 'launch', '--cpus', '2',
+                               '--mem', '3G', '--disk', '4G',
+                               self.distribution, '--name', self.name])
+
+        info = json.loads(subprocess.check_output(
+            ['sudo', 'multipass', 'info', self.name,
+             '--format', 'json']))
+        self.address = info['info'][self.name]['ipv4'][0]
+
+    def copy_to(self, source_path, target_path=''):
+        """Copy a file from the local machine to the Multipass VM.
+        """
+        subprocess.check_call(['sudo', 'multipass', 'copy-files', source_path,
+                               f'{self.name}:{target_path}'])
+
+    def copy_from(self, source_path, target_path):
+        """Copy a file from the Multipass VM to the local machine.
+        """
+        subprocess.check_call(['sudo', 'multipass', 'copy-files',
+                               f'{self.name}:{source_path}',
+                               target_path])
+
+    def destroy(self):
+        subprocess.check_call(['sudo', 'multipass', 'delete', self.name])
+
+
+class LXDTestHost(TestHost):
+    """A container test host set up via LXD on a local machine."""
+
+    def __init__(self, distribution):
+        self.distribution = distribution
+        self.name = petname.generate()
+        self._launch()
+
+    def check_output(self, args, **kwargs):
+        prefix = ['sudo', 'lxc', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        return subprocess.check_output(cmd, **kwargs).strip()
+
+    def call(self, args, **kwargs):
+        prefix = ['sudo', 'lxc', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        return subprocess.call(cmd, **kwargs)
+
+    def check_call(self, args, **kwargs):
+        prefix = ['sudo', 'lxc', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        subprocess.check_call(cmd, **kwargs)
+
+    def run(self, args, **kwargs):
+        prefix = ['sudo', 'lxc', 'exec', self.name, '--']
+        cmd = []
+        cmd.extend(prefix)
+        cmd.extend(args)
+        subprocess.check_call(cmd, **kwargs)
+
+    def _launch(self):
+        subprocess.check_call(['sudo', 'lxc', 'launch',
+                               f'ubuntu:{self.distribution}', self.name,
+                               '--profile', 'default',
+                               '--profile', 'microstack'])
+
+        @tenacity.retry(wait=tenacity.wait_fixed(3))
+        def fetch_addr_info():
+            info = json.loads(subprocess.check_output(
+                ['sudo', 'lxc', 'query', f'/1.0/instances/{self.name}/state']))
+            addrs = info['network']['eth0']['addresses']
+            addr_info = next(filter(lambda a: a['family'] == 'inet', addrs),
+                             None)
+            if addr_info is None:
+                raise RuntimeError('The container interface does'
+                                   ' not have an IPv4 address which'
+                                   ' is unexpected')
+            return addr_info
+        self.address = fetch_addr_info()['address']
+
+    def copy_to(self, source_path, target_path=''):
+        """Copy file or directory to the container.
+        """
+        subprocess.check_call(['sudo', 'lxc', 'file', 'push', source_path,
+                               f'{self.name}/{target_path}',
+                               '--recursive', '--create-dirs'])
+
+    def copy_from(self, source_path, target_path):
+        """Copy file or directory from the container.
+        """
+        subprocess.check_call(['sudo', 'lxc', 'file', 'pull'
+                               f'{self.name}/{source_path}', target_path,
+                               '--recursive', '--create-dirs'])
+
+    def destroy(self):
+        subprocess.check_call(['sudo', 'lxc', 'delete', self.name, '--force'])
 
 
 class Framework(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.HOSTS = []
+        self._test_hosts = []
 
-    def get_host(self):
-        if self.HOSTS:
-            return self.HOSTS[0]
-        host = Host()
-        self.HOSTS.append(host)
-        return host
+    def setUp(self):
+        self._localhost = LocalTestHost()
 
-    def add_host(self):
-        host = Host()
-        self.HOSTS.append(host)
-        return host
+    def tearDown(self):
+        for host in self._test_hosts:
+            host.destroy()
 
-    def verify_instance_networking(self, host, instance_name):
+    @property
+    def localhost(self):
+        return self._localhost
+
+    def add_multipass_host(self, distribution):
+        new_test_host = MultipassTestHost(distribution)
+        self._test_hosts.append(new_test_host)
+        return new_test_host
+
+    def add_lxd_host(self, distribution):
+        new_test_host = LXDTestHost(distribution)
+        self._test_hosts.append(new_test_host)
+        return new_test_host
+
+    def verify_instance_networking(self, test_host, instance_name):
         """Verify that we have networking on an instance
 
         We should be able to ping the instance.
 
         And we should be able to reach the Internet.
 
+        :param :class:`TestHost` test_host: The host to run the test from.
+        :param str instance_name: The name of the Nova instance to connect to.
         """
-        print("Skipping instance networking test due to bug #1852206")
-        # TODO re-enable this test when we have fixed
-        # https://bugs.launchpad.net/microstack/+bug/1852206
-        return True
-        prefix = host.prefix
-
-        # Ping the instance
-        print("Testing ping ...")
+        logger.debug("Testing ping ...")
         ip = None
-        servers = check_output(*prefix, '/snap/bin/microstack.openstack',
-                               'server', 'list', '--format', 'json')
+        servers = test_host.check_output([
+            '/snap/bin/microstack.openstack',
+            'server', 'list', '--format', 'json'
+        ])
         servers = json.loads(servers)
         for server in servers:
             if server['Name'] == instance_name:
@@ -210,56 +395,25 @@ class Framework(unittest.TestCase):
 
         self.assertTrue(ip)
 
-        pings = 1
-        max_pings = 600  # ~10 minutes!
-        while not call(*prefix, 'ping', '-c1', '-w1', ip):
-            pings += 1
-            if pings > max_pings:
-                self.assertFalse(True, msg='Max pings reached!')
-
-        print("Testing instances' ability to connect to the Internet")
-        # Test Internet connectivity
-        attempts = 1
-        max_attempts = 300  # ~10 minutes!
-        username = check_output(*prefix, 'whoami')
-
-        while not call(
-                *prefix,
-                'ssh',
-                '-oStrictHostKeyChecking=no',
-                '-i', '/home/{}/.ssh/id_microstack'.format(username),
-                'cirros@{}'.format(ip),
-                '--', 'ping', '-c1', '91.189.94.250'):
-            attempts += 1
-            if attempts > max_attempts:
-                self.assertFalse(
-                    True,
-                    msg='Unable to access the Internet!')
-            time.sleep(1)
+        test_host.call(['ping', '-i1', '-c10', '-w11', ip])
 
     @gui_wrapper
-    def verify_gui(self, host):
-        """Verify that Horizon Dashboard works
-
-        We should be able to reach the dashboard.
-
-        We should be able to login.
-
-        """
-        # Test
-        print('Verifying GUI for (IP: {})'.format(host.horizon_ip))
-        # Verify that our GUI is working properly
-        dashboard_port = check_output(*host.prefix, 'sudo', 'snap', 'get',
-                                      'microstack',
-                                      'config.network.ports.dashboard')
-        keystone_password = check_output(
-            *host.prefix, 'sudo', 'snap', 'get',
+    def verify_gui(self, test_host):
+        """Verify Horizon Dashboard operation by logging in."""
+        control_ip = test_host.check_output([
+            'sudo', 'snap', 'get', 'microstack', 'config.network.control-ip',
+        ]).decode('utf-8')
+        logger.debug('Verifying GUI for (IP: {})'.format(control_ip))
+        dashboard_port = test_host.check_output([
+            'sudo', 'snap', 'get',
             'microstack',
-            'config.credentials.keystone-password')
-        self.driver.get("http://{}:{}/".format(
-            host.horizon_ip,
-            dashboard_port
-        ))
+            'config.network.ports.dashboard']).decode('utf-8')
+        keystone_password = test_host.check_output([
+            'sudo', 'snap', 'get',
+            'microstack',
+            'config.credentials.keystone-password'
+        ]).decode('utf-8')
+        self.driver.get(f'http://{control_ip}:{dashboard_port}/')
         # Login to horizon!
         self.driver.find_element(By.ID, "id_username").click()
         self.driver.find_element(By.ID, "id_username").send_keys("admin")
@@ -269,26 +423,3 @@ class Framework(unittest.TestCase):
         # Verify that we can click something on the dashboard -- e.g.,
         # we're still not sitting at the login screen.
         self.driver.find_element(By.LINK_TEXT, "Images").click()
-
-    def setUp(self):
-        self.passed = False  # HACK: trigger (or skip) log dumps.
-
-    def tearDown(self):
-        """Clean hosts up, possibly leaving debug information behind."""
-
-        print("Tests complete. Cleaning up.")
-        while self.HOSTS:
-            host = self.HOSTS.pop()
-            if not self.passed:
-                print(
-                    "Tests failed. Leaving {} in place.".format(host.machine))
-                # Skipping log dump, due to
-                # https://bugs.launchpad.net/microstack/+bug/1860783
-                # host.dump_logs()
-                if os.environ.get('INTERACTIVE_DEBUG'):
-                    print('INTERACTIVE_DEBUG set. '
-                          'Opening a shell on test machine.')
-                    call('multipass', 'shell', host.machine)
-            else:
-                print("Tests complete. Cleaning up.")
-                host.teardown()

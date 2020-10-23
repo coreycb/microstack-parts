@@ -64,7 +64,16 @@ def _get_default_config():
         'config.monitoring.ipmi': '',
         'config.services.extra.telegraf': False,
         'config.monitoring.custom-config': f'{snap_common}/etc/telegraf'
-                                           '/telegraf-microstack.conf'
+                                           '/telegraf-microstack.conf',
+
+        # Use emulation by default (with an option to override if KVM is
+        # supported).
+        'config.nova.virt-type': 'qemu',
+        # Use a host CPU model so that any CPU features enabled for
+        # vulnerability mitigation are enabled.
+        'config.nova.cpu-mode': 'host-model',
+        # Do not override cpu-models by default.
+        'config.nova.cpu-models': '',
     }
 
 

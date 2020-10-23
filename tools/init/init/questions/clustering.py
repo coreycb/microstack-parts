@@ -2,13 +2,14 @@ import logging
 import msgpack
 import re
 import netaddr
+import sys
 
 from cryptography.hazmat.primitives import hashes
 from typing import Tuple
 
 from init.questions.question import Question, InvalidAnswer
 from init.shell import (
-    fetch_ip_address,
+    default_source_address,
     config_get,
     config_set,
 )
@@ -39,7 +40,8 @@ class Role(Question):
             if role in self._valid_roles:
                 return role
 
-            print('The role must be either "control" or "compute".')
+            print('The role must be either "control" or "compute".',
+                  file=sys.stderr)
 
         raise InvalidAnswer('Too many failed attempts.')
 
@@ -58,7 +60,8 @@ class ConnectionString(Question):
         except TypeError:
             print('The connection string contains non-ASCII'
                   ' characters please make sure you entered'
-                  ' it as returned by the add-compute command.')
+                  ' it as returned by the add-compute command.',
+                  file=sys.stderr)
             return answer, False
 
         try:
@@ -66,24 +69,28 @@ class ConnectionString(Question):
         except msgpack.exceptions.ExtraData:
             print('The connection string contains extra data'
                   ' characters please make sure you entered'
-                  ' it as returned by the add-compute command.')
+                  ' it as returned by the add-compute command.',
+                  file=sys.stderr)
             return answer, False
         except ValueError:
             print('The connection string contains extra data'
                   ' characters please make sure you entered'
-                  ' it as returned by the add-compute command.')
+                  ' it as returned by the add-compute command.',
+                  file=sys.stderr)
             return answer, False
         except msgpack.exceptions.FormatError:
             print('The connection string format is invalid'
                   ' please make sure you entered'
-                  ' it as returned by the add-compute command.')
+                  ' it as returned by the add-compute command.',
+                  file=sys.stderr)
             return answer, False
         except Exception:
             print('An unexpeted error has occured while trying'
                   ' to decode the connection string. Please'
                   ' make sure you entered it as returned by'
                   ' the add-compute command and raise an'
-                  ' issue if the error persists')
+                  ' issue if the error persists',
+                  file=sys.stderr)
             return answer, False
 
         # Perform token field validation as well so that the rest of
@@ -103,7 +110,7 @@ class ConnectionString(Question):
                 self._validate_hostname(hostname)
             except ValueError as e:
                 print(f'The hostname {hostname} provided in the connection'
-                      f' string is invalid: {str(e)}')
+                      f' string is invalid: {str(e)}', file=sys.stderr)
                 return answer, False
 
         fingerprint = conn_info.get('fingerprint')
@@ -111,7 +118,8 @@ class ConnectionString(Question):
             self._validate_fingerprint(fingerprint)
         except ValueError as e:
             print('The clustering service TLS certificate fingerprint provided'
-                  f' in the connection string is invalid: {str(e)}')
+                  f' in the connection string is invalid: {str(e)}',
+                  file=sys.stderr)
             return answer, False
 
         credential_id = conn_info.get('id')
@@ -119,7 +127,7 @@ class ConnectionString(Question):
             self._validate_credential_id(credential_id)
         except ValueError as e:
             print('The credential id provided in the connection string is'
-                  f' invalid: {str(e)}')
+                  f' invalid: {str(e)}', file=sys.stderr)
             return answer, False
 
         credential_secret = conn_info.get('secret')
@@ -127,7 +135,7 @@ class ConnectionString(Question):
             self._validate_credential_secret(credential_secret)
         except ValueError as e:
             print('The credential secret provided in the connection string is'
-                  f' invalid: {str(e)}')
+                  f' invalid: {str(e)}', file=sys.stderr)
             return answer, False
 
         self._conn_info = conn_info
@@ -224,7 +232,7 @@ class ControlIp(Question):
 
     def _load(self):
         if config_get(Role.config_key) == 'control':
-            return fetch_ip_address() or super()._load()
+            return default_source_address() or super()._load()
         return super()._load()
 
     def ask(self):
@@ -245,7 +253,7 @@ class ComputeIp(Question):
     def _load(self):
         role = config_get(Role.config_key)
         if role == 'compute':
-            return fetch_ip_address() or super().load()
+            return default_source_address() or super().load()
 
         return super()._load()
 

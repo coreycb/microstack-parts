@@ -257,38 +257,6 @@ class OsPassword(ConfigQuestion):
         _env['keystone_password'] = answer
 
 
-class ForceQemu(Question):
-    _type = 'boolean'
-    config_key = 'config.host.check-qemu'
-
-    def yes(self, answer: str) -> None:
-        """Possibly force us to use qemu emulation rather than kvm."""
-
-        cpuinfo = check_output('cat', '/proc/cpuinfo')
-        if 'vmx' in cpuinfo or 'svm' in cpuinfo:
-            # We have processor extensions installed. No need to Force
-            # Qemu emulation.
-            return
-
-        _path = '{SNAP_COMMON}/etc/nova/nova.conf.d/hypervisor.conf'.format(
-            **_env)
-
-        with open(_path, 'w') as _file:
-            _file.write("""\
-[DEFAULT]
-compute_driver = libvirt.LibvirtDriver
-
-[workarounds]
-disable_rootwrap = True
-
-[libvirt]
-virt_type = qemu
-cpu_mode = host-model
-""")
-
-        # TODO: restart nova services when re-running this after init.
-
-
 class VmSwappiness(Question):
 
     _type = 'boolean'
@@ -454,6 +422,7 @@ class NovaHypervisor(Question):
 
     def yes(self, answer):
         log.info('Configuring nova compute hypervisor ...')
+        self._maybe_enable_emulation()
         enable('libvirtd')
         enable('virtlogd')
         enable('nova-compute')
@@ -463,6 +432,66 @@ class NovaHypervisor(Question):
         disable('libvirtd')
         disable('virtlogd')
         disable('nova-compute')
+
+    def _maybe_enable_emulation(self):
+        log.info('Checking virtualization extensions presence on the host')
+        # Use KVM if it is supported, alternatively fall back to software
+        # emulation.
+        if self._is_hw_virt_supported():
+            log.info('Hardware virtualization is supported - KVM will be used'
+                     ' for Nova instances')
+            shell.config_set(**{'config.nova.virt-type': 'kvm'})
+            shell.config_set(**{'config.nova.cpu-mode': 'host-passthrough'})
+        else:
+            log.warning('Hardware virtualization is not supported - software'
+                        ' emulation will be used for Nova instances')
+            shell.config_set(**{'config.nova.virt-type': 'qemu'})
+            shell.config_set(**{'config.nova.cpu-mode': 'host-passthrough'})
+
+    @staticmethod
+    def _is_hw_virt_supported():
+        # Sample lscpu outputs: util-linux/tests/expected/lscpu/
+        cpu_info = json.loads(check_output('lscpu', '-J'))['lscpu']
+        architecture = next(filter(lambda x: x['field'] == 'Architecture:',
+                                   cpu_info), None)['data'].split()
+        flags = next(filter(lambda x: x['field'] == 'Flags:', cpu_info),
+                     None)
+        if flags is not None:
+            flags = flags['data'].split()
+
+        vendor_id = next(filter(lambda x: x['field'] == 'Vendor ID:',
+                                cpu_info), None)
+        if vendor_id is not None:
+            vendor_id = vendor_id['data']
+
+        # Mimic virt-host-validate code (from libvirt) and assume nested
+        # support on ppc64 LE or BE.
+        if architecture in ['ppc64', 'ppc64le']:
+            return True
+        elif vendor_id is not None and flags is not None:
+            if vendor_id == 'AuthenticAMD' and 'svm' in flags:
+                return True
+            elif vendor_id == 'GenuineIntel' and 'vmx' in flags:
+                return True
+            elif vendor_id == 'IBM/S390' and 'sie' in flags:
+                return True
+            elif vendor_id == 'ARM':
+                # ARM 8.3-A added nested virtualization support but it is yet
+                # to land upstream https://lwn.net/Articles/812280/ at the time
+                # of writing (Nov 2020).
+                log.warning('Nested virtualization is not supported on ARM'
+                            ' - will use emulation')
+                return False
+            else:
+                log.warning('Unable to determine hardware virtualization'
+                            f' support by CPU vendor id "{vendor_id}":'
+                            ' assuming it is not supported.')
+                return False
+        else:
+            log.warning('Unable to determine hardware virtualization support'
+                        ' by the output of lscpu: assuming it is not'
+                        ' supported')
+            return False
 
 
 class NovaSpiceConsoleSetup(Question):

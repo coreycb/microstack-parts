@@ -1,4 +1,7 @@
 [DEFAULT]
+
+compute_driver = libvirt.LibvirtDriver
+
 # Set state path to writable directory
 state_path = {{ snap_common }}/lib
 # Log to systemd journal
@@ -8,6 +11,16 @@ use_journal = True
 # which a hostname of a Nova node must match a hostname of an OVN chassis.
 host = {{ node_fqdn }}
 my_ip = {{ compute_ip }}
+
+[workarounds]
+disable_rootwrap = True
+
+[libvirt]
+virt_type = {{ virt_type }}
+cpu_mode = {{ cpu_mode }}
+{% if cpu_mode == 'custom' %}
+cpu_models = {{ cpu_models }}
+{% endif %}
 
 [oslo_concurrency]
 # Oslo Concurrency lock path
