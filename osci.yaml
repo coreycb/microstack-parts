@@ -1,0 +1,26 @@
+- job:
+    name: microstack-bionic
+    parent: openstack-tox-snap-with-sudo
+    timeout: 7200
+    nodeset:
+      nodes:
+        - name: bionic-brown
+          label: bionic-brown
+    vars:
+      tox_envlist: snap
+- job:
+    name: microstack-focal
+    parent: openstack-tox-snap-with-sudo
+    timeout: 7200
+    nodeset:
+      nodes:
+        - name: focal-brown
+          label: focal-brown
+    vars:
+      tox_envlist: snap
+
+- project:
+    check:
+      jobs:
+        - microstack-bionic
+        - microstack-focal

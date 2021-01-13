@@ -702,12 +702,12 @@ parts:
       - pymysql
       - uwsgi
       - git+https://opendev.org/x/snap.openstack#egg=snap.openstack
-      - http://tarballs.openstack.org/nova/nova-stable-ussuri.tar.gz
-      - https://tarballs.opendev.org/openstack/neutron/neutron-stable-ussuri.tar.gz
-      - https://tarballs.opendev.org/openstack/glance/glance-stable-ussuri.tar.gz
-      - https://tarballs.opendev.org/openstack/cinder/cinder-stable-ussuri.tar.gz
-      - https://tarballs.opendev.org/openstack/placement/placement-stable-ussuri.tar.gz
-      - https://tarballs.opendev.org/openstack/horizon/horizon-stable-ussuri.tar.gz
+      - nova==21.1.1
+      - neutron===16.2.0
+      - glance==20.0.1
+      - cinder==16.2.1
+      - openstack-placement==3.0.0
+      - horizon==18.3.2
       - python-cinderclient
       - python-openstackclient
       - python-swiftclient
