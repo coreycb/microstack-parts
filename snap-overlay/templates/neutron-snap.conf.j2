@@ -3,6 +3,10 @@
 state_path = {{ snap_common }}/lib
 # Log to systemd journal
 use_journal = True
+
+log_file = {{ snap_common }}/log/neutron.log
+debug = {{ logging_debug }}
+
 bind_port = 9686
 
 {% if dns_domain %}

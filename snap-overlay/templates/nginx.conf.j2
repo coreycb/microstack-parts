@@ -24,7 +24,11 @@ http {
         # Logging Settings
         ##
 
+{% if logging_debug|lower == "true" %}
+        error_log {{ snap_common }}/log/nginx-error.log debug;
+{% else %}
         error_log {{ snap_common }}/log/nginx-error.log;
+{% endif %}
         access_log {{ snap_common }}/log/nginx-access.log;
 
         ##
