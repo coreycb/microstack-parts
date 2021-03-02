@@ -131,7 +131,14 @@ class TestCluster(Framework):
 
         self.assertTrue(ip)
 
-        control_host.check_call(['ping', '-c10', '-w11', ip])
+        # Ensure instance has enough time to initialize
+        @tenacity.retry(wait=tenacity.wait_fixed(1),
+                        stop=tenacity.stop_after_attempt(10))
+        def wait_ping():
+            control_host.check_call(['ping', '-c10', '-w11', ip])
+
+        wait_ping()
+
         self.passed = True
 
 
