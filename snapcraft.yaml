@@ -686,6 +686,7 @@ parts:
       - conntrack
       - coreutils
       - haproxy
+      - libglib2.0-0
       - libmagic1
       - petname
       - libsystemd0
@@ -711,11 +712,9 @@ parts:
       - python-cinderclient
       - python-openstackclient
       - python-swiftclient
-      # Workaround for https://bugs.launchpad.net/snapcraft/+bug/1860768
-      # This is a package required for the launch script, per the bug
-      # above. We include it here so that we don't try to rebuild dist
-      # stuff:
-      - petname
+      # Pin pip and setuptools to align with other parts
+      - pip==20.0.2
+      - setuptools==44.0.0
       - systemd-python
       # Used by spice-html5 proxy.
       - websockify
@@ -1050,6 +1049,7 @@ parts:
       - libcaca0
       - libfdt1
       - libflac8
+      - libglib2.0-0
       - libglu1-mesa
       - libiscsi7
       - libjpeg-turbo8
@@ -1424,13 +1424,18 @@ parts:
     plugin: python
     # python-version: python3
     requirements:
-     - requirements.txt  # Relative to source path, so tools/init/req...txt
+      - requirements.txt  # Relative to source path, so tools/init/req...txt
+    constraints:
+      - ${SNAPCRAFT_STAGE}/patches/upper-constraints.txt
     source: tools/init
     stage-packages:
       # note(dmitriis) in order to avoid conflicts about lib64/ld-linux-x86-64.so.2
       # with other parts.
       - libc6
       - rsync
+    python-packages:
+      - pip==20.0.2
+      - setuptools==44.0.0
     build-environment: *python-build-environment
     after: [openstack-projects]
     override-build: |
@@ -1451,12 +1456,17 @@ parts:
     plugin: python
     # python-version: python3
     requirements:
-     - requirements.txt
+      - requirements.txt
+    constraints:
+      - ${SNAPCRAFT_STAGE}/patches/upper-constraints.txt
     source: tools/launch
     stage-packages:
       # note(dmitriis) in order to avoid conflicts about lib64/ld-linux-x86-64.so.2
       # with other parts.
       - libc6
+    python-packages:
+      - pip==20.0.2
+      - setuptools==44.0.0
     build-environment: *python-build-environment
     after: [init]
     override-build: |
@@ -1477,6 +1487,9 @@ parts:
       # note(dmitriis) in order to avoid conflicts about lib64/ld-linux-x86-64.so.2
       # with other parts.
       - libc6
+    python-packages:
+      - pip==20.0.2
+      - setuptools==44.0.0
     build-environment: *python-build-environment
     override-build: |
       snapcraftctl build
@@ -1502,6 +1515,9 @@ parts:
     # with other parts.
     stage-packages:
       - libc6
+    python-packages:
+      - pip==20.0.2
+      - setuptools==44.0.0
     build-packages:
       - python3-dev
     build-environment: *python-build-environment
