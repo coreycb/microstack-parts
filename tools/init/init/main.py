@@ -182,6 +182,7 @@ def init() -> None:
         # The following are not yet implemented:
         # questions.VmSwappiness(),
         # questions.FileHandleLimits(),
+        questions.TlsCertificate(),
         questions.DashboardAccess(),
         questions.RabbitMq(),
         questions.DatabaseSetup(),

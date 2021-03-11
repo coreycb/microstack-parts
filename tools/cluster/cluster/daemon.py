@@ -211,7 +211,7 @@ def join():
             return MissingAuthDataInRequest()
 
         # TODO: handle https here when TLS termination support is added.
-        keystone_base_url = 'http://localhost:5000/v3'
+        keystone_base_url = 'https://localhost:5000/v3'
 
         # In an unlikely event of failing to construct an auth object
         # treat it as if invalid data got passed in terms of responding
@@ -231,7 +231,12 @@ def join():
         try:
             # Use the auth object with the app credential to create a session
             # which the Keystone client will use.
-            sess = session.Session(auth=auth)
+            sess = session.Session(
+                auth=auth,
+                # TODO(coreycb): Enable TLS here
+                # verify=config_get('config.tls.cacert-path'),
+                verify=False,
+            )
         except Exception:
             logger.exception('An exception has occurred while trying to build'
                              ' a Session object with auth data'

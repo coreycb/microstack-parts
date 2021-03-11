@@ -115,6 +115,7 @@ class TestHost:
                          '/var/snap/microstack/common/etc/microstack.json',
                          '/tmp/snap.microstack-test/tmp/microstack.json'])
         self.check_call(['microstack-test.rally', 'db', 'recreate'])
+        # TODO(coreycb): Update microstack.json.j2 to enable TLS
         self.check_call([
             'microstack-test.rally', 'deployment', 'create',
             '--filename', '/tmp/microstack.json',
@@ -425,7 +426,7 @@ class Framework(unittest.TestCase):
             'microstack',
             'config.credentials.keystone-password'
         ]).decode('utf-8')
-        self.driver.get(f'http://{control_ip}:{dashboard_port}/')
+        self.driver.get(f'https://{control_ip}:{dashboard_port}/')
         # Login to horizon!
         self.driver.find_element(By.ID, "id_username").click()
         self.driver.find_element(By.ID, "id_username").send_keys("admin")

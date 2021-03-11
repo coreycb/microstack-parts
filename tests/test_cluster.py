@@ -85,6 +85,14 @@ class TestCluster(Framework):
         compute_host.install_microstack(path='microstack_ussuri_amd64.snap',
                                         snap_try=self.snap_try)
 
+        for conf in ['cacert-path', 'cert-path', 'key-path']:
+            path = compute_host.check_output([
+                'sudo', 'snap',
+                'get', 'microstack',
+                'config.tls.{}'.format(conf),
+            ]).decode('utf-8')
+            compute_host.copy_to(path, os.path.dirname(path))
+
         # TODO add the following to args for init
         compute_host.check_call([
             'sudo', 'snap', 'set', 'microstack',
