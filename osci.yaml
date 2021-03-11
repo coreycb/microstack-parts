@@ -21,6 +21,7 @@
 
 - project:
     check:
+      fail-fast: true
       jobs:
         - microstack-bionic
         - microstack-focal
