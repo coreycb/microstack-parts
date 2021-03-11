@@ -270,14 +270,6 @@ entry_points:
       - "{snap_common}/etc/glance/glance-manage.conf"
     config-dirs:
       - "{snap_common}/etc/glance/glance.conf.d"
-  glance-registry:
-    binary: "{snap}/bin/glance-registry"
-    config-files:
-      - "{snap}/etc/glance/glance-registry.conf"
-    config-files-override:
-      - "{snap_common}/etc/glance/glance-registry.conf"
-    config-dirs:
-      - "{snap_common}/etc/glance/glance.conf.d"
   glance-api:
     binary: "{snap}/bin/glance-api"
     config-files:

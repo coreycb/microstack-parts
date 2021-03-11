@@ -223,14 +223,6 @@ apps:
       - mount-observe
       - network-control
       # TODO: - microstack-support
-  registry:
-    command: bin/snap-openstack launch glance-registry
-    daemon: simple
-    plugs:
-      - network
-      - network-bind
-      - network-control
-      # TODO: - microstack-support
   glance-manage:
     command: bin/snap-openstack launch glance-manage
     plugs:

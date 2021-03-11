@@ -867,13 +867,7 @@ class GlanceSetup(Question):
                       'http://{compute_ip}:9292'.format(**_env))
 
         check('snap-openstack', 'launch', 'glance-manage', 'db_sync')
-        # TODO: remove the glance registry
-        # https://blueprints.launchpad.net/glance/+spec/deprecate-registry
-        for service in [
-                'glance-api',
-                'registry',
-        ]:
-            enable(service)
+        enable('glance-api')
 
         nc_wait(_env['compute_ip'], '9292')
 
@@ -883,7 +877,6 @@ class GlanceSetup(Question):
 
     def no(self, answer):
         disable('glance-api')
-        disable('registry')
 
 
 class SecurityRules(Question):
