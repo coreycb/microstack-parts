@@ -1,7 +1,7 @@
 import logging
 import json
-import unittest
 import subprocess
+import unittest
 import yaml
 
 import petname
@@ -62,6 +62,15 @@ class TestHost:
     def install_snap(self, name, options):
         self.check_output(['sudo', 'snap', 'install', name, *options])
 
+    def try_snap(self, name):
+        try:
+            self.check_output(['unsquashfs', name])
+        except subprocess.CalledProcessError:
+            logger.warning("Re-using existing squashfs-root directory with "
+                           "'snap try squashfs-root'")
+        self.check_output(['sudo', 'snap', 'try', 'squashfs-root',
+                           '--devmode'])
+
     def remove_snap(self, name, options):
         self.check_output(['sudo', 'snap', 'remove', name, *options])
 
@@ -69,13 +78,16 @@ class TestHost:
         self.check_output(['sudo', 'snap', 'connect',
                           f'{snap_name}:{plug_name}'])
 
-    def install_microstack(self, *, channel='edge', path=None):
+    def install_microstack(self, *, channel='edge', path=None, snap_try=False):
         """Install MicroStack at this host and connect relevant plugs.
         """
-        if path is not None:
-            self.install_snap(path, ['--devmode'])
+        if path and snap_try:
+            self.try_snap(path)
         else:
-            self.install_snap('microstack', [f'--{channel}', '--devmode'])
+            if path is not None:
+                self.install_snap(path, ['--devmode'])
+            else:
+                self.install_snap('microstack', [f'--{channel}', '--devmode'])
 
         # TODO: add microstack-support once it is merged into snapd.
         plugs = [

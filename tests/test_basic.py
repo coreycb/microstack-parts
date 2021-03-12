@@ -14,6 +14,7 @@ Web IDE.
 
 """
 
+import argparse
 import os
 import sys
 import unittest
@@ -24,6 +25,7 @@ from tests.framework import Framework  # noqa E402
 
 
 class TestBasics(Framework):
+    snap_try = False
 
     def test_basics(self):
         """Basic test
@@ -32,7 +34,8 @@ class TestBasics(Framework):
         open the Horizon GUI.
 
         """
-        self._localhost.install_microstack(path='microstack_ussuri_amd64.snap')
+        self._localhost.install_microstack(path='microstack_ussuri_amd64.snap',
+                                           snap_try=self.snap_try)
         self._localhost.init_microstack([
             '--auto',
             '--control',
@@ -100,6 +103,14 @@ class TestBasics(Framework):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--snap-try", help="Install snap as rw mount from "
+                        "squashfs-root directory", action='store_true')
+    parser.add_argument('unittest_args', nargs='*')
+    args = parser.parse_args()
+    TestBasics.snap_try = args.snap_try
+    sys.argv[1:] = args.unittest_args
+
     # Run our tests, ignoring deprecation warnings and warnings about
     # unclosed sockets. (TODO: setup a selenium server so that we can
     # move from PhantomJS, which is deprecated, to to Selenium headless.)

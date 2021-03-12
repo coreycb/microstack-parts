@@ -10,6 +10,7 @@ vms.
 
 """
 
+import argparse
 import json
 import os
 import sys
@@ -32,11 +33,13 @@ logger.addHandler(stream)
 
 
 class TestCluster(Framework):
+    snap_try = False
 
     def test_cluster(self):
         openstack_cmd = '/snap/bin/microstack.openstack'
         control_host = self._localhost
-        control_host.install_microstack(path='microstack_ussuri_amd64.snap')
+        control_host.install_microstack(path='microstack_ussuri_amd64.snap',
+                                        snap_try=self.snap_try)
 
         # Get an IP address on the lxdbr0 bridge and use it for the
         # control IP so that the tunnel ports of the compute node target the
@@ -74,7 +77,13 @@ class TestCluster(Framework):
 
         wait_addr()
 
-        compute_host.install_microstack(path='microstack_ussuri_amd64.snap')
+        if self.snap_try:
+            # Note(coreycb): Work-around for https://pad.lv/1908424
+            compute_host.check_call([
+               'sudo', 'apt', 'install', '--yes', '--allow-downgrades',
+               'snapd=2.44.3+20.04'])
+        compute_host.install_microstack(path='microstack_ussuri_amd64.snap',
+                                        snap_try=self.snap_try)
 
         # TODO add the following to args for init
         compute_host.check_call([
@@ -143,4 +152,12 @@ class TestCluster(Framework):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--snap-try", help="Install snap as rw mount from "
+                        "squashfs-root directory", action='store_true')
+    parser.add_argument('unittest_args', nargs='*')
+    args = parser.parse_args()
+    TestCluster.snap_try = args.snap_try
+    sys.argv[1:] = args.unittest_args
+
     unittest.main(warnings='ignore')
