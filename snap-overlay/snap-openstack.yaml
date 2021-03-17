@@ -77,6 +77,7 @@ setup:
     neutron_ovn_metadata_agent.ini.j2: "{snap_common}/etc/neutron/neutron_ovn_metadata_agent.ini"
     rabbitmq.conf.j2: "{snap_common}/etc/rabbitmq/rabbitmq.config"
     iscsid.conf.j2: "{snap_common}/etc/iscsi/iscsid.conf"
+    lvm.conf.j2: "{snap_common}/etc/lvm/lvm.conf"
 
     # LMA stack templates
     telegraf.conf.j2: "{snap_common}/etc/telegraf/telegraf-microstack.conf"

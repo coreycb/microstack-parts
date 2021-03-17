@@ -59,6 +59,8 @@ layout:
   # to /etc/rtslib-fb-target.
   /etc/rtslib-fb-target:
     bind: $SNAP_COMMON/etc/target
+  /etc/lvm:
+    bind: $SNAP_COMMON/etc/lvm
 apps:
   # Openstack
   openstack:
