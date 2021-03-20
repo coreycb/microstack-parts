@@ -21,6 +21,42 @@ system-usernames:
   snap_daemon: shared
 
 layout:
+  /lib/udev/rules.d/60-qemu-guest-agent.rules:
+    bind-file: $SNAP/lib/udev/rules.d/60-qemu-guest-agent.rules
+  /lib/x86_64-linux-gnu/libnss_libvirt.so.2:
+    bind-file: $SNAP/lib/x86_64-linux-gnu/libnss_libvirt.so.2
+  /lib/x86_64-linux-gnu/libnss_libvirt_guest.so.2:
+    bind-file: $SNAP/lib/x86_64-linux-gnu/libnss_libvirt_guest.so.2
+  /usr/bin/ivshmem-client:
+    bind-file: $SNAP/usr/bin/ivshmem-client
+  /usr/bin/ivshmem-server:
+    bind-file: $SNAP/usr/bin/ivshmem-server
+  /usr/bin/qemu-pr-helper:
+    bind-file: $SNAP/usr/bin/qemu-pr-helper
+  /usr/bin/virtfs-proxy-helper:
+    bind-file: $SNAP/usr/bin/virtfs-proxy-helper
+  /usr/bin/virsh:
+    bind-file: $SNAP/usr/bin/virsh
+  /usr/bin/qemu-system-x86_64:
+    bind-file: $SNAP/usr/bin/qemu-system-x86_64
+  /usr/bin/qemu-img:
+    bind-file: $SNAP/usr/bin/qemu-img
+  /usr/bin/qemu-io:
+    bind-file: $SNAP/usr/bin/qemu-io
+  /usr/bin/qemu-nbd:
+    bind-file: $SNAP/usr/bin/qemu-nbd
+  /usr/bin/virt-admin:
+    bind-file: $SNAP/usr/bin/virt-admin
+  /usr/bin/virt-host-validate:
+    bind-file: $SNAP/usr/bin/virt-host-validate
+  /usr/bin/virt-login-shell:
+    bind-file: $SNAP/usr/bin/virt-login-shell
+  /usr/bin/virt-pki-validate:
+    bind-file: $SNAP/usr/bin/virt-pki-validate
+  /usr/bin/virt-xml-validate:
+    bind-file: $SNAP/usr/bin/virt-xml-validate
+  /usr/include/libvirt:
+    bind: $SNAP/usr/include/libvirt
   /usr/local/bin:
     bind: $SNAP/usr/local/bin
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/ceph:
@@ -29,21 +65,83 @@ layout:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/qemu
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+  /usr/lib/ipxe/qemu:
+    bind: $SNAP/usr/lib/ipxe/qemu
   /usr/lib/libvirt:
     bind: $SNAP/usr/lib/libvirt
+  /usr/lib/qemu:
+    bind: $SNAP/usr/lib/qemu
+  /usr/lib/x86_64-linux-gnu/libvirt:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt
+  /usr/lib/x86_64-linux-gnu/libvirt-admin.so:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt-admin.so
+  /usr/lib/x86_64-linux-gnu/libvirt-admin.so.0.6000.0:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt-admin.so.0.6000.0
+  /usr/lib/x86_64-linux-gnu/libvirt-qemu.so:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt-qemu.so
+  /usr/lib/x86_64-linux-gnu/libvirt-qemu.so.0.6000.0:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt-qemu.so.0.6000.0
+  /usr/lib/x86_64-linux-gnu/libvirt.so:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt.so
+  /usr/lib/x86_64-linux-gnu/libvirt.so.0.6000.0:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/libvirt.so.0.6000.0
+  /usr/lib/x86_64-linux-gnu/pkgconfig/libvirt-admin.pc:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/pkgconfig/libvirt-admin.pc
+  /usr/lib/x86_64-linux-gnu/pkgconfig/libvirt-qemu.pc:
+    bind-file: $SNAP/usr/lib/x86_64-linux-gnu/pkgconfig/libvirt-qemu.pc
+  /usr/lib/x86_64-linux-gnu/pkgconfig/libvirt.pc:
+    bind-file: $SNAP:/usr/lib/x86_64-linux-gnu/pkgconfig/libvirt.pc
+  /usr/lib/x86_64-linux-gnu/qemu:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/qemu
+  /usr/sbin/libvirtd:
+    bind-file: $SNAP/usr/sbin/libvirtd
+  /usr/sbin/libvirtd:
+    bind-file: $SNAP/usr/sbin/libvirtd
+  /usr/sbin/virt-sanlock-cleanup:
+    bind-file: $SNAP/usr/sbin/virt-sanlock-cleanup
+  /usr/sbin/virtlockd:
+    bind-file: $SNAP/usr/sbin/virtlockd
+  /usr/sbin/virtlogd:
+    bind-file: $SNAP/usr/sbin/virtlogd
+  /usr/sbin/qemu-ga:
+    bind-file: $SNAP/usr/sbin/qemu-ga
+  /usr/bin/kvm:
+    bind-file: $SNAP/usr/bin/kvm
   /usr/share/libvirt:
     bind: $SNAP/usr/share/libvirt
   /usr/share/qemu:
     bind: $SNAP/usr/share/qemu
+  /usr/share/seabios:
+    bind: $SNAP/usr/share/seabios
   # Keystone really wants to look here for its fernet keys for some reason
   /etc/keystone/fernet-keys:
     bind: $SNAP_COMMON/fernet-keys
   # Libvirt has a hard-coded path for the apparmor directory.
   /etc/apparmor.d:
     bind: $SNAP_COMMON/etc/apparmor.d
+  /etc/sasl2/libvirt.conf:
+    bind-file: $SNAP_COMMON/etc/sasl2/libvirt.conf
+  /etc/default/libvirt-guests:
+    bind-file: $SNAP_COMMON/etc/default/libvirt-guests
+  /etc/default/qemu-kvm:
+    bind-file: $SNAP_COMMON/etc/default/qemu-kvm
+  /etc/default/libvirtd:
+    bind-file: $SNAP_COMMON/etc/default/libvirtd
+  /etc/default/virtlockd:
+    bind-file: $SNAP_COMMON/etc/default/virtlockd
+  /etc/default/virtlogd:
+    bind-file: $SNAP_COMMON/etc/default/virtlogd
+  /etc/dnsmasq.d-available/libvirt-daemon:
+    bind-file: $SNAP_COMMON/etc/dnsmasq.d-available/libvirt-daemon
   # os-brick has a hard-coded location for the iscsi initiator name file.
   /etc/iscsi:
     bind: $SNAP_COMMON/etc/iscsi
+  /etc/libvirt:
+    bind: $SNAP_COMMON/etc/libvirt
+  /etc/qemu:
+    bind: $SNAP_COMMON/etc/qemu
+  /etc/profile.d/libvirt-uri.sh:
+    bind-file: $SNAP_COMMON/etc/profile.d/libvirt-uri.sh
   # NOTE: /var/target is there since vhost-scsi module is a holder of target-core-mod (see 
   # the content of /sys/module/target_core_mod/holders). This prevents rtslib from being
   # able to change the value of /sys/kernel/config/target/dbroot to /etc/target. At the same time,
@@ -61,6 +159,17 @@ layout:
     bind: $SNAP_COMMON/etc/target
   /etc/lvm:
     bind: $SNAP_COMMON/etc/lvm
+  /var/log/libvirt:
+    bind: $SNAP_COMMON/log/libvirt
+  /var/lib/libvirt:
+    bind: $SNAP_COMMON/lib/libvirt
+  /var/cache/libvirt:
+    bind: $SNAP_COMMON/cache/libvirt
+  /run/lvm:
+    bind: $SNAP_COMMON/run/lvm
+  /run/lock/lvm:
+    bind: $SNAP_COMMON/run/lock/lvm
+
 apps:
   # Openstack
   openstack:
@@ -1015,125 +1124,22 @@ parts:
       done
       snapcraftctl build
 
-
   # libvirt/qemu
   qemu:
-    source: https://git.launchpad.net/ubuntu/+source/qemu
-    source-type: git
-    source-branch: ubuntu/focal-updates
-    plugin: autotools
-    after:
-      - uca-sources
-    build-environment:
-      # Workaround for https://bugs.launchpad.net/snapcraft/+bug/1860766
-      - LD_LIBRARY_PATH: $SNAPCRAFT_PART_INSTALL/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/ceph:$SNAPCRAFT_PART_INSTALL/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio:$LD_LIBRARY_PATH
+    plugin: nil
     stage-packages:
-      - seabios
-      - ipxe-qemu
-      - freeglut3 # provides libglut.so.3
-      - libnuma1
-      - libspice-server1
-      - libasound2
-      - libasyncns0
-      - libbluetooth3
-      - libboost-iostreams1.67.0
-      - libboost-random1.67.0
-      - libboost-system1.67.0
-      - libboost-thread1.67.0
-      - libcaca0
-      - libfdt1
-      - libflac8
-      - libglib2.0-0
-      - libglu1-mesa
-      - libiscsi7
-      - libjpeg-turbo8
-      - libnspr4
-      - libnss3
-      - libogg0
-      - libopus0
-      - libpixman-1-0
-      - libpulse0
-      - librados2
-      - librbd1
-      - libsdl1.2debian
-      - libslang2
-      - libsndfile1
-      - libusb-1.0-0
-      - libusbredirparser1
-      - libvorbis0a
-      - libvorbisenc2
-      - libx11-6
-      - libxi6
-      - libxau6
-      - libxcb1
-      - libxdmcp6
-      - libxext6
-      - libpng16-16
-      - libaio1
-      - libasn1-8-heimdal
-      - libbrotli1
-      - libcurl3-gnutls
-      - libgssapi3-heimdal
-      - libhcrypto4-heimdal
-      - libheimbase1-heimdal
-      - libheimntlm0-heimdal
-      - libhx509-5-heimdal
-      - libkrb5-26-heimdal
-      - libldap-2.4-2
-      - libnghttp2-14
-      - libpsl5
-      - libroken18-heimdal
-      - librtmp1
-      - libssh-4
-      - libwind0-heimdal
-    build-packages:
-      - acpica-tools
-      - libaio-dev
-      - libasound2-dev
-      - libattr1-dev
-      - libbluetooth-dev
-      - libcap-dev
-      - libcap-ng-dev
-      - libcurl4-gnutls-dev
-      - libfdt-dev
-      - gnutls-dev
-      - libiscsi-dev
-      - libncurses5-dev
-      - try: [libnuma-dev]
-      - libpixman-1-dev
-      - libpulse-dev
-      - librados-dev
-      - librbd-dev
-      - libsasl2-dev
-      - libsdl1.2-dev
-      - try: [libspice-server-dev, libspice-protocol-dev]
-      - libusb-1.0-0-dev
-      - libusbredirparser-dev
-      - linux-libc-dev
-      - uuid-dev
-      - xfslibs-dev
-      - libjpeg-dev
-      - zlib1g-dev
-      - libpng-dev
-      - wget
-      - dpkg-dev
-      - gcc
-    autotools-configure-parameters:
-      - --disable-blobs
-      - --prefix=/usr
-      - --localstatedir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common
-      - --sysconfdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common
-      - --firmwarepath=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/seabios:/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/qemu:/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/ipxe/qemu
-      - --disable-user
-      - --disable-linux-user
-      - --disable-bsd-user
-      - --disable-vhost-user
-      - --enable-system
-      - --target-list=x86_64-softmmu
-      - --disable-xen
-    override-build: |
-      dpkg-source --before-build .
-      snapcraftctl build
+    - on amd64: [qemu-system-x86]
+    - on i386: [qemu-system-x86]
+    - on armhf: [qemu-system-arm]
+    - on arm64: [qemu-system-arm]
+    - qemu-utils
+    - libslang2
+    organize:
+      usr/lib/*/pulseaudio/libpulsecommon-8.0.so: usr/lib/libpulsecommon-8.0.so
+      usr/share/seabios/bios-256k.bin: qemu/bios-256k.bin
+      usr/share/seabios/vgabios-stdvga.bin: qemu/vgabios-stdvga.bin
+      usr/share/seabios/kvmvapic.bin: qemu/kvmvapic.bin
+      usr/lib/ipxe/qemu/efi-virtio.rom: qemu/efi-virtio.rom
 
   kvm-support:
     plugin: nil
@@ -1141,141 +1147,14 @@ parts:
     - try: [msr-tools]
 
   libvirt:
-    source: https://git.launchpad.net/ubuntu/+source/libvirt
-    source-type: git
-    source-branch: ubuntu/focal-updates
-    source-subdir: build-subdir
+    plugin: nil
     after:
       - qemu
       - uca-sources
-    plugin: autotools
-    build-packages:
-    - libxml2-dev
-    - libxml-libxml-perl
-    - libcurl4-gnutls-dev
-    - libncurses5-dev
-    - libreadline-dev
-    - zlib1g-dev
-    - libgcrypt20-dev
-    - libgnutls28-dev
-    - libyajl-dev
-    - libpcap0.8-dev
-    - libaudit-dev
-    - libdevmapper-dev
-    - libpciaccess-dev
-    - libnl-3-dev
-    - libnl-route-3-dev
-    - libxml2-utils
-    - uuid-dev
-    - try: [libnuma-dev]
-    - python-all
-    - python-six
-    - wget
-    - dpkg-dev
-    - xsltproc
-    - libapparmor-dev
-    - rsync
-    - open-iscsi
     stage-packages:
-    - dmidecode
-    - dnsmasq
-    - iptables
-    - genisoimage
-    - libxml2
-    - libyajl2
-    - try: [libnuma1]
-    - libcurl3-gnutls
-    - libpcap0.8
-    - libpciaccess0
-    # libvirt uses the pm-is-supported tool.
-    - pm-utils
-    - ebtables
-    - apparmor
-    - libapparmor1
-    autotools-configure-parameters:
-    - --with-qemu
-    - --without-bhyve
-    - --without-xen
-    - --without-openvz
-    - --without-vmware
-    - --without-xenapi
-    - --without-esx
-    - --without-hyperv
-    - --without-lxc
-    - --without-vz
-    - --without-vbox
-    - --without-uml
-    - --without-sasl
-    - --without-storage-iscsi
-    - --without-storage-sheepdog
-    - --without-storage-rbd
-    - --without-storage-lvm
-    - --without-selinux
-    - --with-chrdev-lock-files=/run/lock
-    - --with-storage-iscsi
-    # TODO(dmitriis): re-enable once a workaround is found for subprocess' RPATH handling.
-    # - --with-apparmor
-    - --without-apparmor
-    # NOTE: the install prefix will be different from the actual location on snap installation.
-    - --prefix=/usr
-    - --bindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/bin
-    - --sbindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin
-    - --libexecdir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/libexec
-    - --libdir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib
-    - --includedir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/include
-    - --oldincludedir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/include
-    - --localstatedir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common
-    - --sysconfdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
-    - DNSMASQ=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/dnsmasq
-    - DMIDECODE=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/dmidecode
-    - OVSVSCTL=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/local/bin/ovs-vsctl
-    - IPTABLES_PATH=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/iptables-legacy
-    - IP6TABLES_PATH=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/ip6tables-legacy
-    - EBTABLES_PATH=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/ebtables-legacy
-    build-environment:
-      # Libraries under /snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/x86_64-linux-gnu are not added to the
-      # runpath by default. This is OK for parent processes which get LD_LIBRARY_PATH set properly but not
-      # for the child processes they spawn since the environment variables are not passed down to children by default after execve(2).
-      # `readelf -d /snap/microstack/current/usr/libexec/virt-aa-helper` should return something like:
-      # (RUNPATH)            Library runpath: [/snap/microstack/current/usr/lib:/snap/microstack/current/usr/lib/x86_64-linux-gnu:...]
-      - LDFLAGS: '$LDFLAGS -Wl,-rpath=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib -Wl,-rpath=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/x86_64-linux-gnu -Wl,-rpath=/snap/$SNAPCRAFT_PROJECT_NAME/current/lib -Wl,-rpath=/lib/x86_64-linux-gnu -Wl,-rpath=/lib/'
-    override-build: |
-      dpkg-source --before-build .
-      logger `echo -n $PWD`
-      # Prevent libvirt from attempting to run setgroups
-      echo "
+    - libvirt-daemon-system
+    - libvirt-dev
 
-      #undef HAVE_SETGROUPS
-      #undef HAVE_SETEUID
-      " >> config-post.h
-
-      # See https://bugs.launchpad.net/snapcraft/+bug/1882255
-      mkdir build-subdir
-      cd build-subdir
-      ../autogen.sh
-
-      echo "#!/bin/sh
-      exit 0
-      " >> autogen.sh
-      chmod +x autogen.sh
-      ln -s ../configure configure
-      cd ..
-      # end of a workaround for LP: #1882255
-      # Build
-      snapcraftctl build
-
-      rsync --remove-source-files -arhvP $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/* $SNAPCRAFT_PART_INSTALL/usr/
-      rm -rf $SNAPCRAFT_PART_INSTALL/snap/$SNAPCRAFT_PROJECT_NAME/current/usr
-
-      # Copy the generated apparmor template into the install dir
-      # it will be used by libvirt at runtime.
-      mkdir -p $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/libvirt/
-      mkdir -p $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/abstractions
-      cp $SNAPCRAFT_PART_BUILD/src/security/apparmor/TEMPLATE.qemu $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/libvirt/TEMPLATE.qemu
-      cp $SNAPCRAFT_PART_BUILD/src/security/apparmor/libvirt-qemu $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/abstractions/libvirt-qemu
-      # While LXC is not used, the AppArmor code errors out if the template for LXC is not there.
-      cp $SNAPCRAFT_PART_BUILD/src/security/apparmor/TEMPLATE.lxc $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/libvirt/TEMPLATE.lxc
-      cp $SNAPCRAFT_PART_BUILD/src/security/apparmor/libvirt-lxc $SNAPCRAFT_PART_INSTALL/etc/apparmor.d/abstractions/libvirt-lxc
   # MySQL
   mysql-server:
     plugin: dump
@@ -1310,50 +1189,58 @@ parts:
     stage-packages:
       - memcached
 
-  # Cinder LVM backend
+
   lvm2:
+    plugin: nil
     after:
       - libvirt
-    source: https://git.launchpad.net/ubuntu/+source/lvm2
-    source-type: git
-    source-branch: ubuntu/focal
-    build-packages:
-      - python3-pyudev
     stage-packages:
-      - thin-provisioning-tools
-    plugin: autotools
-    autotools-configure-parameters:
-      - --with-confdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
-      - --with-default-system-dir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
-      - --with-cache=internal
-      - --with-device-uid=0
-      # Assumes that the "disk" group is present on the host and has 6 for its gid.
-      # This is common but not fully reliable not knowing the target distribution.
-      - --with-device-gid=6
-      - --with-device-mode=0660
-      - --with-default-pid-dir=/run
-      - --with-default-run-dir=/run/lvm
-      - --with-default-locking-dir=/run/lock/lvm
-      - --with-thin=internal
-      - --with-thin-check=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_check
-      - --with-thin-dump=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_dump
-      - --with-thin-repair=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_repair
-      - --enable-applib
-      - --enable-blkid_wiping
-      - --enable-cmdlib
-      - --enable-dmeventd
-      - --enable-dbus-service
-      # - --enable-lvmlockd-dlm
-      # - --enable-lvmlockd-sanlock
-      # - --enable-lvmpolld
-      # - --enable-notify-dbus
-      - --enable-pkgconfig
-      - --enable-readline
-      # The two below are especially important to make sure lvm tools do not try to use
-      # mknod themselves to create block special files for device mapper devices and
-      # so that cookies are used to synchronize udev and LVM tools operations.
-      - --enable-udev_rules
-      - --enable-udev_sync
+    - lvm2
+
+  # Cinder LVM backend
+  #lvm2:
+  #  after:
+  #    - libvirt
+  #  source: https://git.launchpad.net/ubuntu/+source/lvm2
+  #  source-type: git
+  #  source-branch: ubuntu/focal
+  #  build-packages:
+  #    - python3-pyudev
+  #  stage-packages:
+  #    - thin-provisioning-tools
+  #  plugin: autotools
+  #  autotools-configure-parameters:
+  #    - --with-confdir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
+  #    - --with-default-system-dir=/var/snap/$SNAPCRAFT_PROJECT_NAME/common/etc/
+  #    - --with-cache=internal
+  #    - --with-device-uid=0
+  #    # Assumes that the "disk" group is present on the host and has 6 for its gid.
+  #    # This is common but not fully reliable not knowing the target distribution.
+  #    - --with-device-gid=6
+  #    - --with-device-mode=0660
+  #    - --with-default-pid-dir=/run
+  #    - --with-default-run-dir=/run/lvm
+  #    - --with-default-locking-dir=/run/lock/lvm
+  #    - --with-thin=internal
+  #    - --with-thin-check=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_check
+  #    - --with-thin-dump=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_dump
+  #    - --with-thin-repair=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/sbin/thin_repair
+  #    - --enable-applib
+  #    - --enable-blkid_wiping
+  #    - --enable-cmdlib
+  #    - --enable-dmeventd
+  #    - --enable-dbus-service
+  #    # - --enable-lvmlockd-dlm
+  #    # - --enable-lvmlockd-sanlock
+  #    # - --enable-lvmpolld
+  #    # - --enable-notify-dbus
+  #    - --enable-pkgconfig
+  #    - --enable-readline
+  #    # The two below are especially important to make sure lvm tools do not try to use
+  #    # mknod themselves to create block special files for device mapper devices and
+  #    # so that cookies are used to synchronize udev and LVM tools operations.
+  #    - --enable-udev_rules
+  #    - --enable-udev_sync
 
   open-iscsi:
     after:
@@ -1538,7 +1425,7 @@ parts:
       # with other parts.
       - libc6
       # fallocate
-      - util-linux
+      #- util-linux
       # losetup
       - mount
 
